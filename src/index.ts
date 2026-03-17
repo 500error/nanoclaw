@@ -242,6 +242,11 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
 
+  const lastUserMsgId = missedMessages.filter((m) => !m.is_from_me && !m.is_bot_message).at(-1)?.id;
+  if (lastUserMsgId) {
+    await channel.onAgentResult?.(chatJid, lastUserMsgId, output !== 'error' && !hadError);
+  }
+
   if (output === 'error' || hadError) {
     // If we already sent output to the user, don't roll back the cursor —
     // the user got their response and re-processing would send duplicates.

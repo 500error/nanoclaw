@@ -94,8 +94,14 @@ export class SlackChannel implements Channel {
       const groups = this.opts.registeredGroups();
       if (!groups[jid]) return;
 
-      const isBotMessage =
-        !!msg.bot_id || msg.user === this.botUserId;
+      const isBotMessage = !!msg.bot_id || msg.user === this.botUserId;
+
+      // React with 👀 to acknowledge we saw the message
+      if (!isBotMessage) {
+        this.app.client.reactions
+          .add({ channel: msg.channel, timestamp: msg.ts, name: 'eyes' })
+          .catch(() => {});
+      }
 
       let senderName: string;
       if (isBotMessage) {
@@ -113,7 +119,10 @@ export class SlackChannel implements Channel {
       let content = msg.text;
       if (this.botUserId && !isBotMessage) {
         const mentionPattern = `<@${this.botUserId}>`;
-        if (content.includes(mentionPattern) && !TRIGGER_PATTERN.test(content)) {
+        if (
+          content.includes(mentionPattern) &&
+          !TRIGGER_PATTERN.test(content)
+        ) {
           content = `@${ASSISTANT_NAME} ${content}`;
         }
       }
@@ -142,10 +151,7 @@ export class SlackChannel implements Channel {
       this.botUserId = auth.user_id as string;
       logger.info({ botUserId: this.botUserId }, 'Connected to Slack');
     } catch (err) {
-      logger.warn(
-        { err },
-        'Connected to Slack but failed to get bot user ID',
-      );
+      logger.warn({ err }, 'Connected to Slack but failed to get bot user ID');
     }
 
     this.connected = true;
@@ -155,6 +161,16 @@ export class SlackChannel implements Channel {
 
     // Sync channel names on startup
     await this.syncChannelMetadata();
+  }
+
+  async onAgentResult(jid: string, messageId: string, success: boolean): Promise<void> {
+    const channelId = jid.replace(/^slack:/, '');
+    await this.app.client.reactions
+      .remove({ channel: channelId, timestamp: messageId, name: 'eyes' })
+      .catch(() => {});
+    await this.app.client.reactions
+      .add({ channel: channelId, timestamp: messageId, name: success ? 'white_check_mark' : 'x' })
+      .catch(() => {});
   }
 
   async sendMessage(jid: string, text: string): Promise<void> {
@@ -245,9 +261,7 @@ export class SlackChannel implements Channel {
     }
   }
 
-  private async resolveUserName(
-    userId: string,
-  ): Promise<string | undefined> {
+  private async resolveUserName(userId: string): Promise<string | undefined> {
     if (!userId) return undefined;
 
     const cached = this.userNameCache.get(userId);

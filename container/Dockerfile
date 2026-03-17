@@ -24,7 +24,18 @@ RUN apt-get update && apt-get install -y \
     libxshmfence1 \
     curl \
     git \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Install .NET SDK 8 and 10
+RUN wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh \
+    && chmod +x /tmp/dotnet-install.sh \
+    && /tmp/dotnet-install.sh --channel 8.0 --install-dir /usr/local/dotnet \
+    && /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/local/dotnet \
+    && rm /tmp/dotnet-install.sh
+ENV DOTNET_ROOT=/usr/local/dotnet
+ENV PATH=$PATH:/usr/local/dotnet
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 # Set Chromium path for agent-browser
 ENV AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium
