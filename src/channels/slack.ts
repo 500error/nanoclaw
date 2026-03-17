@@ -163,13 +163,21 @@ export class SlackChannel implements Channel {
     await this.syncChannelMetadata();
   }
 
-  async onAgentResult(jid: string, messageId: string, success: boolean): Promise<void> {
+  async onAgentResult(
+    jid: string,
+    messageId: string,
+    success: boolean,
+  ): Promise<void> {
     const channelId = jid.replace(/^slack:/, '');
     await this.app.client.reactions
       .remove({ channel: channelId, timestamp: messageId, name: 'eyes' })
       .catch(() => {});
     await this.app.client.reactions
-      .add({ channel: channelId, timestamp: messageId, name: success ? 'white_check_mark' : 'x' })
+      .add({
+        channel: channelId,
+        timestamp: messageId,
+        name: success ? 'white_check_mark' : 'x',
+      })
       .catch(() => {});
   }
 

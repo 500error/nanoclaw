@@ -212,6 +212,10 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   let hadError = false;
   let outputSentToUser = false;
 
+  const lastUserMsgId = missedMessages
+    .filter((m) => !m.is_from_me && !m.is_bot_message)
+    .at(-1)?.id;
+
   const output = await runAgent(group, prompt, chatJid, async (result) => {
     // Streaming output callback — called for each agent result
     if (result.result) {
@@ -225,6 +229,9 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
       if (text) {
         await channel.sendMessage(chatJid, text);
         outputSentToUser = true;
+        if (lastUserMsgId) {
+          await channel.onAgentResult?.(chatJid, lastUserMsgId, true);
+        }
       }
       // Only reset idle timer on actual results, not session-update markers (result: null)
       resetIdleTimer();
@@ -236,16 +243,14 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
     if (result.status === 'error') {
       hadError = true;
+      if (lastUserMsgId) {
+        await channel.onAgentResult?.(chatJid, lastUserMsgId, false);
+      }
     }
   });
 
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
-
-  const lastUserMsgId = missedMessages.filter((m) => !m.is_from_me && !m.is_bot_message).at(-1)?.id;
-  if (lastUserMsgId) {
-    await channel.onAgentResult?.(chatJid, lastUserMsgId, output !== 'error' && !hadError);
-  }
 
   if (output === 'error' || hadError) {
     // If we already sent output to the user, don't roll back the cursor —

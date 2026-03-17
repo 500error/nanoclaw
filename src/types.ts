@@ -90,7 +90,11 @@ export interface Channel {
   setTyping?(jid: string, isTyping: boolean): Promise<void>;
   // Optional: called when the agent finishes. messageId is the platform-native
   // ID of the last user message that triggered the run.
-  onAgentResult?(jid: string, messageId: string, success: boolean): Promise<void>;
+  onAgentResult?(
+    jid: string,
+    messageId: string,
+    success: boolean,
+  ): Promise<void>;
   // Optional: sync group/chat names from the platform.
   syncGroups?(force: boolean): Promise<void>;
 }
