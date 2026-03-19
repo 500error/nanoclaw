@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# nanoclaw — run a prompt through the container agent and print the response.
+# Usage: nanoclaw [--group <name|folder>] <prompt>
+DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+exec "$DIR/../node_modules/.bin/tsx" "$DIR/../src/cli.ts" "$@"

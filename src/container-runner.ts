@@ -541,6 +541,19 @@ export async function runContainerAgent(
       fs.writeFileSync(logFile, logLines.join('\n'));
       logger.debug({ logFile, verbose: isVerbose }, 'Container log written');
 
+      // code === null means killed by signal (e.g., CLI idle cleanup after output).
+      // Treat the same as a post-output timeout: success, not failure.
+      if (code === null && hadStreamingOutput) {
+        logger.info(
+          { group: group.name, duration, newSessionId },
+          'Container killed after output (idle cleanup)',
+        );
+        outputChain.then(() => {
+          resolve({ status: 'success', result: null, newSessionId });
+        });
+        return;
+      }
+
       if (code !== 0) {
         logger.error(
           {

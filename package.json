@@ -4,6 +4,10 @@
   "description": "Personal Claude assistant. Lightweight, secure, customizable.",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "nanoclaw": "./bin/nanoclaw",
+    "nanoclaw-delegate": "./scripts/nanoclaw-delegate.sh"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -13,6 +17,7 @@
     "format:fix": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "prepare": "husky",
+    "cli": "tsx src/cli.ts",
     "setup": "tsx setup/index.ts",
     "auth": "tsx src/whatsapp-auth.ts",
     "test": "vitest run",

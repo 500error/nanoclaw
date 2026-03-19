@@ -124,4 +124,28 @@ export function cleanupOrphans(): void {
   } catch (err) {
     logger.warn({ err }, 'Failed to clean up orphaned containers');
   }
+
+  // Remove exited containers — --rm is not honored on SIGKILL (exit 137)
+  try {
+    const output = execSync(
+      `${CONTAINER_RUNTIME_BIN} ps -a --filter name=nanoclaw- --filter status=exited --format '{{.Names}}'`,
+      { stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf-8' },
+    );
+    const exited = output.trim().split('\n').filter(Boolean);
+    for (const name of exited) {
+      try {
+        execSync(`${CONTAINER_RUNTIME_BIN} rm ${name}`, { stdio: 'pipe' });
+      } catch {
+        /* already removed */
+      }
+    }
+    if (exited.length > 0) {
+      logger.info(
+        { count: exited.length, names: exited },
+        'Removed exited containers',
+      );
+    }
+  } catch (err) {
+    logger.warn({ err }, 'Failed to remove exited containers');
+  }
 }
