@@ -41,7 +41,9 @@ async function main(): Promise<void> {
 
   const prompt = argv.join(' ').trim();
   if (!prompt) {
-    process.stderr.write('Usage: tsx src/cli.ts [--group <name|folder>] <prompt>\n');
+    process.stderr.write(
+      'Usage: tsx src/cli.ts [--group <name|folder>] <prompt>\n',
+    );
     process.exit(1);
   }
 
@@ -80,7 +82,10 @@ async function main(): Promise<void> {
   // Start credential proxy, or reuse existing one if nanoclaw service is running
   let proxyServer: { close: () => void } | null = null;
   try {
-    proxyServer = await startCredentialProxy(CREDENTIAL_PROXY_PORT, PROXY_BIND_HOST);
+    proxyServer = await startCredentialProxy(
+      CREDENTIAL_PROXY_PORT,
+      PROXY_BIND_HOST,
+    );
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code !== 'EADDRINUSE') throw err;
     // nanoclaw service already has a proxy on this port — reuse it
@@ -168,6 +173,8 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  process.stderr.write(`Fatal: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.stderr.write(
+    `Fatal: ${err instanceof Error ? err.message : String(err)}\n`,
+  );
   process.exit(1);
 });

@@ -32,8 +32,14 @@ for repo in "${repos[@]}"; do
     continue
   fi
 
-  echo "[$LOG_TAG] Fetching $name..."
-  if git -C "$repo" fetch --prune origin 2>&1; then
+  # Detect the default branch (main, master, or whatever HEAD points to)
+  default_branch="$(git -C "$repo" remote show origin 2>/dev/null | awk '/HEAD branch/ {print $NF}')"
+  if [[ -z "$default_branch" ]]; then
+    default_branch="main"
+  fi
+
+  echo "[$LOG_TAG] Fetching $name ($default_branch)..."
+  if git -C "$repo" fetch origin "$default_branch":"$default_branch" 2>&1; then
     echo "[$LOG_TAG] $name up to date"
   else
     echo "[$LOG_TAG] WARNING: fetch failed for $name" >&2
